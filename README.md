@@ -1,6 +1,6 @@
 # clem2
 
-Simple text variation and formatting language written in Python.
+Simple and lightweight text variation/formatting language written in Python.
 
 ## Example .clem file
 ```
