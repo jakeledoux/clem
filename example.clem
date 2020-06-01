@@ -1,4 +1,4 @@
-# Sections are marked as following
+# Sections are optional, and contained within parenthesis
 greeting (
     # [indicator] | [content]
     # The indicator is used to find the line in your Python program. It's referenced as 'section.indicator'.
