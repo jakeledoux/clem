@@ -1,7 +1,7 @@
 from __future__ import annotations
 import random
 import re
-from typing import List, Union
+from typing import Dict, List, Union
 
 # Type aliases
 Content = List[Union['Choice', 'Keyword', str]]
@@ -43,6 +43,8 @@ class Keyword(object):
 class Decision(object):
     def __init__(self, choices: List[Choice]):
         self.choices: List[Choice] = choices
+        if len(self.choices) < 2:
+            self.choices.append(Choice(content="", odds=1))
 
     def __repr__(self):
         return f'<{" / ".join((str(choice) for choice in self.choices))}>'
@@ -82,7 +84,7 @@ class Choice(object):
                 odds = int(re.match(r'(\d+):', odds).group(1))
             else:
                 odds = 1
-            content[0] = text
+            content[0] = text.strip()
         else:
             odds = 1
 
@@ -106,7 +108,6 @@ class Line(object):
     def render(self, **keywords):
         """ Flattens and renders line into regular string.
         """
-        print(self.content)
         return Line.flatten(self.content, **keywords)
 
     @staticmethod
@@ -164,10 +165,17 @@ class Line(object):
                 level -= 1
                 if level == 0:
                     descension = idx + 1
-                    # Append bracket level to content after parsing recursively
-                    content.append(
-                        Line.parse(text[ascension + 1:descension - 1])
+                    # Recursively parse decision content
+                    decision_content = Line.parse(
+                        text[ascension + 1:descension - 1]
                     )
+                    # If only one choice, make into Decision.
+                    # (Will otherwise be ignored)
+                    if type(decision_content) is not Decision:
+                        decision_content = Decision(
+                            [Choice.parse([decision_content])]
+                        )
+                    content.append(decision_content)
             # New top-level choice
             elif c == "/" and level == 0:
                 # Dump remaining text into content buffer
@@ -202,17 +210,46 @@ class Clem(object):
     """ Master Clem object. Handles top-level file loading and user interaction.
     """
     def __init__(self):
-        self.lines: List[Line] = list()
+        self.lines: Dict[str, Line] = dict()
+
+    def load_file(self, file):
+        """ Load and parse whole .clem file into line list.
+        """
+        # Load lines from file and strip whitespace/blank lines
+        with open(file, 'r', encoding='utf-8') as f:
+            file_contents = (line.strip() for line in f.readlines()
+                             if line.strip())
+
+        # Parse lines and insert them into line list
+        for line in file_contents:
+            self.add(line)
 
     def add(self, text):
         """ Parses raw Clem line and adds it to list.
         """
+        line = Line(text)
+        # Insert line into appropriate list (create it if nonexistent)
+        if self.lines.get(line.identifier) is None:
+            self.lines[line.identifier] = list()
+        self.lines[line.identifier].append(line)
+
+    def find(self, identifier):
+        """ Returns random line with matching identifier.
+        """
+        return random.choice(self.lines[identifier])
+
+    def render(self, identifier, **keywords):
+        """ Returns rendered line with matching identifier.
+        """
+        return self.find(identifier).render(**keywords)
 
 
 if __name__ == "__main__":
-    with open("simple.clem", "r") as f:
-        examples = f.readlines()
+    clem = Clem()
 
-    result = Line(examples[0])
-    print(examples[0])
-    print(result.render(location="Brooklyn"))
+    # Load in lines
+    clem.load_file("simple.clem")
+    clem.add("greeting | hi there! my name is <katy <perry> / selena <gomez>>")
+
+    # Print out line
+    print(clem.render("greeting", location="Brooklyn"))
