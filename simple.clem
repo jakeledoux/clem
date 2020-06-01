@@ -1,2 +1,5 @@
-greeting | <Sup / What's up>, my <2: dog / cat>? <Welcome to {location}.>
-greeting | How's it <hanging / going>, <bro/dude/dog/man>?
+greeting (
+    casual | <Sup / What's up>, my <2: dog / cat>? <Welcome to {location}.>
+    casual | How's it <hanging / going>, <bro/dude/dog/man>?
+    formal | Greetings, my <dear> <man / friend>. I <sincerely> hope you enjoy your <time/stay> here in {location}.
+)

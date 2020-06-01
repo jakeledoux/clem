@@ -95,6 +95,8 @@ class Line(object):
     """ Represents a single Clem line.
     """
 
+    section_pattern: re.Pattern = re.compile(r'^\s*(\w+)\s*\(')
+    clem_line_pattern: re.Pattern = re.compile(r'^\s*\w+\s*\|.+')
     indentifier_pattern: re.Pattern = re.compile(r'^(\S+)\s?\|(.*)')
 
     def __init__(self, text):
@@ -108,7 +110,18 @@ class Line(object):
     def render(self, **keywords):
         """ Flattens and renders line into regular string.
         """
-        return Line.flatten(self.content, **keywords)
+        return Line.clean_whitespace(
+            Line.flatten(self.content, **keywords)
+        )
+
+    @staticmethod
+    def clean_whitespace(text):
+        # Clean excessive spaces
+        text = re.sub(r'\s+([\s.,!?:;)])', r'\1', text.strip())
+        # Remove spaces following opening characters
+        text = re.sub(r'([(\'"])\s+', r'\1', text)
+
+        return text
 
     @staticmethod
     def flatten(content, **keywords):
@@ -137,7 +150,7 @@ class Line(object):
 
         if new_content:
             if all((type(s) is str for s in new_content)):
-                return "".join(new_content)
+                return " ".join((s.strip() for s in new_content))
             return Line.flatten(new_content, **keywords)
         else:
             return content
@@ -221,17 +234,29 @@ class Clem(object):
                              if line.strip())
 
         # Parse lines and insert them into line list
+        section = ""
         for line in file_contents:
-            self.add(line)
+            if Line.section_pattern.match(line):
+                section = Line.section_pattern.match(line).group(1)
+            elif line.strip() == ")":
+                section = ""
+            elif Line.clem_line_pattern.match(line):
+                self.add(line, section)
 
-    def add(self, text):
+    def add(self, text, section=""):
         """ Parses raw Clem line and adds it to list.
         """
+        # Ignore commented lines
+        if text.strip().startswith("#"):
+            return
         line = Line(text)
+
         # Insert line into appropriate list (create it if nonexistent)
-        if self.lines.get(line.identifier) is None:
-            self.lines[line.identifier] = list()
-        self.lines[line.identifier].append(line)
+        identifier = f'{section}.{line.identifier}' \
+            if section else line.identifier
+        if self.lines.get(identifier) is None:
+            self.lines[identifier] = list()
+        self.lines[identifier].append(line)
 
     def find(self, identifier):
         """ Returns random line with matching identifier.
@@ -242,14 +267,3 @@ class Clem(object):
         """ Returns rendered line with matching identifier.
         """
         return self.find(identifier).render(**keywords)
-
-
-if __name__ == "__main__":
-    clem = Clem()
-
-    # Load in lines
-    clem.load_file("simple.clem")
-    clem.add("greeting | hi there! my name is <katy <perry> / selena <gomez>>")
-
-    # Print out line
-    print(clem.render("greeting", location="Brooklyn"))
