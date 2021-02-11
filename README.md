@@ -56,14 +56,14 @@ print("Formal: ", clem.render("greeting.formal", location="Covington"))
 
 ### Origin
 
-Clem was originally developed for [Fallout Simulator 2]
-(https://github.com/jakeledoux/fsim2) and based on the primitive templating
-system of its predecessor, [Fallout Simulator]
-(https://jakeledoux.itch.io/falloutsim). You can read the original format
-specification [here](https://jakeledoux.github.io/fsim2/clem_docs). This version
-of Clem, originally titled Clem2, was adapted from the game's code to better
-structure the logic and to remove dependencies so that it could run independent
-of the game.
+Clem was originally developed for [Fallout Simulator 
+2](https://github.com/jakeledoux/fsim2) and based on the primitive templating
+system of its predecessor, [Fallout 
+Simulator](https://jakeledoux.itch.io/falloutsim). You can read the original
+format specification [here](https://jakeledoux.github.io/fsim2/clem_docs). This
+version of Clem, originally titled Clem2, was adapted from the game's code to
+better structure the logic and to remove dependencies so that it could run
+independent of the game.
 
 ### Name
 
