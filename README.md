@@ -17,9 +17,8 @@ pip install clem
 ```
 # Sections are optional, and contained within parenthesis
 greeting (
-    # [indicator] | [content]
-    # The indicator is used to find the line in your Python program. It's referenced as 'section.indicator'.
-    
+    # Syntax: INDICATOR | CONTENT
+
     # You can add decisions by putting choices inside angle-brackets. Clem will select one at random.
     casual | How's it <hanging / going>, <bro/dude/dog/man>?
     
@@ -27,9 +26,9 @@ greeting (
     casual | I <<sincerely> hope / think> you will <have fun during / enjoy / <forever> remember> your stay.
     
     # You can set a choice's odds by prefixing it with '[number]:'. If ommitted this will default to 1.
-    casual | <Sup / What's up>, my <2: dog / cat>? <Welcome to {location}.>
+    casual | <Sup / What's up>, my <3: dog / cat>? <Welcome to {location}.>
     
-    # Remember you can make as many different indicators as you want.
+    # Remember you can have as many different indicators as you want.
     formal | Greetings, my <dear> <man / friend>. I <sincerely> hope you enjoy your <time/stay> here in {location}.
 )
 ```
@@ -39,13 +38,11 @@ greeting (
 ``` Python
 from clem import Clem
 
-clem = Clem()
+# Load .clem file
+clem = Clem('example.clem')
 
-# Load in lines
-clem.load_file('example.clem')
-# Add a new one at runtime
-clem.add('casual | hi there! my name is <Jack <Black / White> \
-         / Selena <Gomez>>.', 'greeting')
+# Add a new line at runtime
+clem.add('casual | hi there! my name is <Jack <Black / White> / Selena <Gomez>>.', section='greeting')
 
 # Print out line
 print('Casual: ', clem.render('greeting.casual', location='Boston'))
