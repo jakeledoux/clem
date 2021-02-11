@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/clem)](https://pypi.org/project/clem/)
 
-Simple and lightweight text variation/formatting language written in pure
+Simple and lightweight text variation and templating language written in pure
 Python.
 
 ## Installation

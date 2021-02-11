@@ -6,7 +6,7 @@ with open('README.md') as f:
 setup(
     name='clem',
     version='0.1.0',
-    description='Simple and lightweight text variation/formatting language written in pure Python.',
+    description='Simple and lightweight text variation and templating language written in pure Python.',
     long_description=readme,
     long_description_content_type='text/markdown',
     author='Jake Ledoux',
