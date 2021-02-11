@@ -1,0 +1,5 @@
+if which python3 | grep -q clem; then
+    pytest --cov=clem/ tests/
+else
+    echo You are not in the clem environment.
+fi

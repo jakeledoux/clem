@@ -1,8 +1,19 @@
-# clem2
+# Clem
 
-Simple and lightweight text variation/formatting language written in Python.
+[![PyPI version](https://img.shields.io/pypi/v/clem)](https://pypi.org/project/clem/)
 
-## Example .clem file
+Simple and lightweight text variation/formatting language written in pure
+Python.
+
+## Installation
+``` bash
+pip install clem
+```
+
+## Usage
+
+### Example .clem file
+
 ```
 # Sections are optional, and contained within parenthesis
 greeting (
@@ -23,7 +34,8 @@ greeting (
 )
 ```
 
-## Using Clem in Python
+### Using Clem in Python
+
 ``` Python
 from clem import Clem
 
@@ -39,3 +51,22 @@ clem.add("casual | hi there! my name is <Jack <Black / White> \
 print("Casual: ", clem.render("greeting.casual", location="Boston"))
 print("Formal: ", clem.render("greeting.formal", location="Covington"))
 ```
+
+## History
+
+### Origin
+
+Clem was originally developed for [Fallout Simulator 2]
+(https://github.com/jakeledoux/fsim2) and based on the primitive templating
+system of its predecessor, [Fallout Simulator]
+(https://jakeledoux.itch.io/falloutsim). You can read the original format
+specification [here](https://jakeledoux.github.io/fsim2/clem_docs). This version
+of Clem, originally titled Clem2, was adapted from the game's code to better
+structure the logic and to remove dependencies so that it could run independent
+of the game.
+
+### Name
+
+The Clem language is named after a user by the name of 'qclem', who contributed
+to the content and localisation of the templates for the original Fallout
+Simulator.
