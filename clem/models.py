@@ -37,8 +37,11 @@ class Choice:
 class Clem:
     """ Handles top-level file loading and user interaction.
     """
-    def __init__(self):
+    def __init__(self, *filenames):
         self.lines: Dict[str, Line] = dict()
+
+        for filename in filenames:
+            self.load_file(filename)
 
     def add(self, text: str, section: Optional[str] = None):
         """ Parses raw Clem line and adds it to list.
@@ -151,12 +154,16 @@ class Line:
     indentifier_pattern: re.Pattern = re.compile(r'^(\S+)\s?\|(.*)')
 
     def __init__(self, text: str):
-        identifier, content = Line.indentifier_pattern.match(text).groups()
-        self.identifier: str = identifier
+        match = Line.indentifier_pattern.match(text)
+        if match:
+            identifier, content = match.groups()
+        else:
+            identifier, content = None, text
+        self.identifier: Optional[str] = identifier
         self.content: ClemContent = Line.parse(content.strip())
 
     def __repr__(self) -> str:
-        return f'<Line {self.identifier!r}>'
+        return f'<Line ({self.identifier})>'
 
     def render(self, **keywords: Dict[str, str]) -> str:
         """ Renders line as a string. This will flatten all decisions and
@@ -181,6 +188,10 @@ class Line:
             -> Union[ClemContent, List[ClemContent]]:
         """ Recursively flattens all contents into string.
         """
+        # Content is already a string
+        if isinstance(content, str):
+            return content
+
         new_content = list()
         for section in content:
             if type(section) is str:
