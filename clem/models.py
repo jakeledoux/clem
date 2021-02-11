@@ -1,26 +1,25 @@
 import random
 import re
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 # Type aliases
-ClemContent = List[Union['Choice', 'Keyword', str]]
+ClemContent = List[Union['Choice', 'Decision', 'Keyword', str]]
 
 
-class Choice(object):
+class Choice:
     odds_pattern = re.compile(r'(^(?:\d+:)?)(.*)')
 
     def __init__(self, content: ClemContent, odds: int = 1):
         self.content: ClemContent = content
         self.odds: int = odds
 
-    def __repr__(self):
-        return f"({self.odds}) {str(self.content)}"
-
-    def __str__(self):
-        return self.__repr__()
+    def __repr__(self) -> str:
+        return f'<Choice (Odds: {self.odds})>'
 
     @staticmethod
-    def parse(content):
+    def parse(content: List[str]) -> 'Choice':
+        """ Constructs a `Choice` from Clem syntax.
+        """
         # Get odds declaration if it exists, default to 1 otherwise
         if type(content[0]) == str:
             odds, text = Choice.odds_pattern.match(content[0]).groups()
@@ -35,13 +34,13 @@ class Choice(object):
         return Choice(content=content, odds=odds)
 
 
-class Clem(object):
+class Clem:
     """ Handles top-level file loading and user interaction.
     """
     def __init__(self):
         self.lines: Dict[str, Line] = dict()
 
-    def add(self, text, section=''):
+    def add(self, text: str, section: Optional[str] = None):
         """ Parses raw Clem line and adds it to list.
         """
         # Ignore commented lines
@@ -50,22 +49,22 @@ class Clem(object):
         line = Line(text)
 
         # Insert line into appropriate list (create it if nonexistent)
-        identifier = f'{section}.{line.identifier}' \
-            if section else line.identifier
-        if self.lines.get(identifier) is None:
-            self.lines[identifier] = list()
+        identifier = f'{section or line.identifer}.{line.identifier}'
+        self.lines[identifier] = self.lines.get(identifier, list())
         self.lines[identifier].append(line)
 
-    def find(self, identifier):
+    def find(self, identifier: str) -> Optional['Line']:
         """ Returns random line with matching identifier.
         """
-        return random.choice(self.lines[identifier])
+        lines = self.lines.get(identifier)
+        if lines:
+            return random.choice(lines)
 
-    def load_file(self, file):
+    def load_file(self, filename: str):
         """ Load and parse whole .clem file into line list.
         """
         # Load lines from file and strip whitespace/blank lines
-        with open(file, 'r', encoding='utf-8') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             file_contents = (line.strip() for line in f.readlines()
                              if line.strip())
 
@@ -79,23 +78,28 @@ class Clem(object):
             elif Line.clem_line_pattern.match(line):
                 self.add(line, section)
 
-    def render(self, identifier, **keywords):
-        """ Returns rendered line with matching identifier.
+    def render(self, identifier: str, **keywords: Dict[str, str]) \
+            -> Optional[str]:
+        """ Renders a random line by `identifier`.
         """
-        return self.find(identifier).render(**keywords)
+        line = self.find(identifier)
+        if line:
+            return line.render(**keywords)
 
 
-class Decision(object):
+class Decision:
+    """ A collection of mutually exclusive Choices>
+    """
     def __init__(self, choices: List[Choice]):
         self.choices: List[Choice] = choices
         if len(self.choices) < 2:
             self.choices.append(Choice(content='', odds=1))
 
-    def __repr__(self):
-        return f'<{" / ".join((str(choice) for choice in self.choices))}>'
+    def __repr__(self) -> str:
+        return f'<Decision (n={len(self.choices)})>'
 
-    def decide(self):
-        """ Flattens decision into contents by picking one option.
+    def decide(self) -> ClemContent:
+        """ Rasterizes decision into content of one of choices.
         """
         options = list()
 
@@ -106,15 +110,19 @@ class Decision(object):
         return random.choice(options).content
 
 
-class Keyword(object):
-    def __init__(self, name):
+class Keyword:
+    """ A placeholder for a variable.
+    """
+    def __init__(self, name: str):
         self.name: str = name
 
-    def __repr__(self):
-        return f'{{\'{self.name}\'}}'
+    def __repr__(self) -> str:
+        return f'<Keyword {self.name!r}>'
 
     @staticmethod
-    def parse(text):
+    def parse(text: str) -> ClemContent:
+        """ Parses text for Keywords and returns resulting content.
+        """
         reset_point = 0
         content = list()
         for idx, c in enumerate(text):
@@ -135,31 +143,32 @@ class Keyword(object):
             return content[0]
 
 
-class Line(object):
-    """ Represents a single Clem line.
+class Line:
+    """ An entire Clem line.
     """
-
     section_pattern: re.Pattern = re.compile(r'^\s*(\w+)\s*\(')
     clem_line_pattern: re.Pattern = re.compile(r'^\s*\w+\s*\|.+')
     indentifier_pattern: re.Pattern = re.compile(r'^(\S+)\s?\|(.*)')
 
-    def __init__(self, text):
+    def __init__(self, text: str):
         identifier, content = Line.indentifier_pattern.match(text).groups()
         self.identifier: str = identifier
         self.content: ClemContent = Line.parse(content.strip())
 
-    def __repr__(self):
-        return f'({self.identifier}) {self.content}'
+    def __repr__(self) -> str:
+        return f'<Line {self.identifier!r}>'
 
-    def render(self, **keywords):
-        """ Flattens and renders line into regular string.
+    def render(self, **keywords: Dict[str, str]) -> str:
+        """ Renders line as a string. This will flatten all decisions and
+            rasterize all Keywords using `keywords`.
         """
-        return Line.clean_whitespace(
-            Line.flatten(self.content, **keywords)
-        )
+        return Line.clean_whitespace(Line.flatten(self.content, **keywords))
 
     @staticmethod
-    def clean_whitespace(text):
+    def clean_whitespace(text: str) -> str:
+        """ Removes surplus whitespace introduced by tokenization and
+            rasterization processes.
+        """
         # Clean excessive spaces
         text = re.sub(r'\s+([\s.,!?:;)])', r'\1', text.strip())
         # Remove spaces following opening characters
@@ -168,7 +177,8 @@ class Line(object):
         return text
 
     @staticmethod
-    def flatten(content, **keywords):
+    def flatten(content, **keywords: Dict[str, str]) \
+            -> Union[ClemContent, List[ClemContent]]:
         """ Recursively flattens all contents into string.
         """
         new_content = list()
@@ -200,7 +210,7 @@ class Line(object):
             return content
 
     @staticmethod
-    def parse(text):
+    def parse(text: str) -> ClemContent:
         # Level: Current bracket depth
         # Ascension: Index of first bracket
         # Descension: Index of last bracket / last reset point
